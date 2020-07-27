@@ -5,11 +5,6 @@ export async function getUsers() {
   return response;
 }
 
-export async function getUser(id) {
-  const response = await axios.get('https://jsonplaceholder.typicode.com/users/'+id);
-  return response;
-}
-
 export async function deleteUser(id) {
   const response = await axios.delete('https://jsonplaceholder.typicode.com/users/'+id);
   return response;
