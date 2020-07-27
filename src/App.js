@@ -1,48 +1,107 @@
 import React, { Component } from 'react';
-import {BrowserRouter, Route, NavLink, Switch} from "react-router-dom"; //Define properties on Tag
-import UsersPage from "./Pages/UsersPage"; //View All Names Users
-import UserPage from "./Pages/UserPage"; //View One User and Date
-import EditUserPage from "./Pages/EditUserPage"; //Edit User
-import CreateUserPage from "./Pages/CreateUserPage"; //Add User
-import NotFound from "./Pages/NotFound"; //Page Error 404 Not Found
-import "./App.css";
+import './App.css';
+import ViewUser from "./components/ViewUser";
+import {getUsers, deleteUser, updateUser, addUser} from "./Api/Users";
+import UsersForm from "./components/UsersForm";
 
-const HomePage = ()=><div>Home</div>
-const AboutPage = ()=><div>About</div>
-
-//Define properties
-const MyNavLink = (props) =><NavLink exact activeClassName="active" {...props}>{props.children}</NavLink>
-
-//Start Component
 class App extends Component {
+
+  state = {
+    users: [],
+    user: {}
+  }
+
+  componentDidMount =()=>{
+    getUsers().then(response => {
+      this.setState({
+        users: response.data
+      });
+    })
+    .catch(error=>{
+      alert('حدث خطأ غير معروف');
+    });
+  }
+
+  setActive = (user) => {
+    this.setState({'user': user});
+  }
+
+  deleteUser = (user) => {
+    // delete from server
+    deleteUser(user.id)
+      .then(()=>{
+        // delete from state
+        let users = this.state.users;
+        const index = users.indexOf(user);
+        users.splice(index, 1);
+        this.setState({users});
+      })
+      .catch(error=>{
+        alert('حدث خطأ غير معروف');
+      });
+  }
+
+  updateUser= (values) => {
+    const id = this.state.user.id;
+    updateUser(id, values)
+    .then(()=> {
+      alert('Success');
+    }) 
+    .catch(error=>{
+        alert('حدث خطأ غير معروف');
+      });
+  }
+
+  addUser= (values) =>{
+    addUser(values)
+    .then(()=> {
+      alert('Success');
+    })
+    .catch(error=>{
+        alert('حدث خطأ غير معروف');
+      });
+  }
+
   render() {
     return (
-      <BrowserRouter>
-        <div className="App"> 
-        {/* Start Nav Bar */}
-          <MyNavLink to="/">Home</MyNavLink> {" "}
-          <MyNavLink to="/about">About</MyNavLink>{" "}
-          <MyNavLink to="/users">Users</MyNavLink>{" "}
-          <MyNavLink to="/users/create">Create User</MyNavLink>
-          {/* End Nav Bar */}
-
-        {/* Start Router Pages */}
-          <Switch>
-          <Route path="/" exact component={HomePage} />
-          <Route path="/about" component={AboutPage} />
-          <Route path="/users" exact component={UsersPage} />
-          <Route path="/users/create" exact component={CreateUserPage} />
-          <Route path="/users/:id" exact component={UserPage} />
-          <Route path="/users/edit/:id" exact component={EditUserPage} />
-          {/* Page Error 404 Not Found */}
-          <Route component={NotFound} /> 
-
-          </Switch>
-        {/* End Router Pages */}
+      <div className="App">
+        <ul>
+          {this.state.users.map(user=>
+            <li key={user.id}>
+              {user.name} {' '}
+              <button onClick={()=>this.setActive(user)}>View</button>
+              <button onClick={()=>this.deleteUser(user)}>Delete</button>
+            </li>
+          )}
+        </ul>
+        <div>
+          <h3>User Details</h3>
+          {this.state.user.id > 0 ? 
+            <ViewUser user={this.state.user} />
+            : 'please select a user'
+          }
         </div>
-      </BrowserRouter>
+        <div>
+          <h3>Edit User</h3>
+          {this.state.user.id > 0 ? 
+            <UsersForm 
+              values={this.state.user} 
+              onSubmit={this.updateUser}/>
+            : 'please select a user'
+          }
+        </div>
+        <div>
+          <h3>Add new User</h3>
+            <UsersForm 
+              values={{
+                name: '',
+                email: ''
+              }} 
+              onSubmit={this.addUser}/>
+        </div>
+      </div>
     );
   }
 }
-// End Component
+
 export default App;
